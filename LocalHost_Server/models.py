@@ -40,7 +40,7 @@ def get_embedding_model():
     cohere_api_key = os.getenv("COHERE_API_KEY")
     if not cohere_api_key:
         raise ValueError("COHERE_API_KEY must be provided in environment variables when Ollama is not available")
-    return CohereEmbeddings(cohere_api_key=cohere_api_key)
+    return CohereEmbeddings(cohere_api_key=cohere_api_key,model="embed-english-v3.0")
 
 def get_llm(model_name=None, groq_api_key=None):
     # Use environment variables as fallback
