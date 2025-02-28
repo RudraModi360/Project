@@ -25,10 +25,13 @@ Ensure you have the following installed:
    git clone https://github.com/RudraModi360/Project.git
    cd Project
    ```
-2. Install dependencies:
+2. Install dependencies and local package:
    ```bash
    pip install -r requirements.txt
+   pip install -e .
    ```
+
+   This will install all required dependencies and the local package in development mode.
 
 ### Environment Variables
 Configure the following environment variables in a `.env` file or your local environment:
@@ -42,7 +45,13 @@ GROQ_API_KEY=your_groq_api_key
 
 ## Usage
 
-### Running the chatbot
+### Running the Backend Server
+Start the FastAPI backend server:
+```bash
+uvicorn LocalHost_Server.main:app --reload
+```
+
+### Running the Frontend
 Start the Streamlit app by running:
 ```bash
 streamlit run Streamlit_page.py
