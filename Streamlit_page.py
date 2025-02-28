@@ -5,7 +5,7 @@ from langchain_groq import ChatGroq
 from langchain_core.messages import HumanMessage, AIMessage
 from langchain_core.chat_history import InMemoryChatMessageHistory
 from langchain_community.chat_message_histories import ChatMessageHistory
-from langchain_ollama import OllamaEmbeddings
+from langchain_cohere import CohereEmbeddings
 from langchain.prompts import ChatPromptTemplate
 from langchain.chains.combine_documents import create_stuff_documents_chain
 from langchain.chains import create_retrieval_chain
@@ -37,7 +37,7 @@ if "store" not in st.session_state:
     st.session_state.store = {}
 
 # Initialize retriever and embeddings
-embedding_model = OllamaEmbeddings(model="nomic-embed-text:latest")
+embedding_model = CohereEmbeddings(cohere_api_key=os.getenv("COHERE_API_KEY"), model="embed-english-v3.0")
 vector_db = FAISS.load_local(
     "DB", embeddings=embedding_model, allow_dangerous_deserialization=True
 )
@@ -46,20 +46,15 @@ retriever = vector_db.as_retriever()
 # Prompt setup
 retriever_prompt = "Based on the provided chat history and the user's latest question — which may reference prior context — rephrase the question into a self-contained query that is clear without relying on the chat history. Do not answer the question; simply reformulate it if necessary, or return it unchanged."
 
-context_prompt = ChatPromptTemplate.from_messages(
-    [
-        ("system", retriever_prompt),
-        ("human", "{input}"),
-    ]
-)
+context_prompt = ChatPromptTemplate.from_messages([
+    ("system", retriever_prompt),
+    ("human", "{input}"),
+])
 
 history_aware_retriever = create_history_aware_retriever(llm, retriever, context_prompt)
 
-with_memory_prompt = ChatPromptTemplate.from_messages(
-    [
-        (
-            "system",
-            """
+with_memory_prompt = ChatPromptTemplate.from_messages([
+    ("system", """
     # Goal
     Provide Ayurvedic guidance for common illnesses with simple, safe home remedies. Recommend consulting a doctor if necessary.
     
@@ -101,22 +96,18 @@ with_memory_prompt = ChatPromptTemplate.from_messages(
     
     ## Identity
     I am AyuHelper, created by Team Ayurnetra today. I offer Ayurvedic advice like a caring Vaidya, always here to help.
-    """,
-        ),
-        ("human", "{input}"),
-    ]
-)
+    """),
+    ("human", "{input}"),
+])
 
 history_chain = create_stuff_documents_chain(llm, with_memory_prompt)
 rag_chain = create_retrieval_chain(history_aware_retriever, history_chain)
-
 
 # Session history management
 def get_chat_session_history(session_id: str) -> BaseChatMessageHistory:
     if session_id not in st.session_state.store:
         st.session_state.store[session_id] = ChatMessageHistory()
     return st.session_state.store[session_id]
-
 
 conversational_rag_chain = RunnableWithMessageHistory(
     rag_chain,
@@ -126,7 +117,6 @@ conversational_rag_chain = RunnableWithMessageHistory(
     output_messages_key="answer",
 )
 
-
 def summarize_history(messages, max_tokens=300):
     """Generate a concise summary from the chat history."""
     user_messages = [msg.content for msg in messages if isinstance(msg, HumanMessage)]
@@ -135,12 +125,10 @@ def summarize_history(messages, max_tokens=300):
     summary = "Relevant context: " + " ".join(user_messages[-5:])
     return summary[:max_tokens]
 
-
 # Function to create a retriever prompt
 def construct_prompt(user_input):
     summary = summarize_history(st.session_state.chat_history.messages)
     return f"{summary}\nUser: {user_input}".strip()
-
 
 # Display chat history in the left sidebar
 st.sidebar.title("Chat History")
@@ -157,9 +145,7 @@ for session_id, messages in reversed(st.session_state.past_sessions):
             st.sidebar.markdown(f"**{role}:** {msg.content}")
 
 # Display current session history in the left sidebar
-with st.sidebar.expander(
-    f"Current Session {st.session_state.session_id[:8]}", expanded=True
-):
+with st.sidebar.expander(f"Current Session {st.session_state.session_id[:8]}", expanded=True):
     for message in st.session_state.chat_history.messages:
         role = "User" if isinstance(message, HumanMessage) else "AI"
         st.sidebar.markdown(f"**{role}:** {message.content}")
@@ -185,8 +171,7 @@ for message in st.session_state.chat_history.messages:
     with st.chat_message(role.lower()):
         st.markdown(message.content)
 
-
-# Function to start a new session while keeping past history in the sidebar
+# Function to start a new session
 def start_new_session():
     st.session_state.past_sessions.append(
         (st.session_state.session_id, list(st.session_state.chat_history.messages))
@@ -194,7 +179,6 @@ def start_new_session():
     st.session_state.session_id = str(uuid.uuid4())
     st.session_state.chat_history = ChatMessageHistory()
     st.rerun()
-
 
 # Button to start a new session
 if st.sidebar.button("Start New Session"):
