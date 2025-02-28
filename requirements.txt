@@ -1,0 +1,9 @@
+streamlit
+uuid
+langchain-groq
+langchain-core
+langchain-community
+langchain-ollama
+langchain
+faiss-cpu
+time
