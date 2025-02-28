@@ -37,11 +37,11 @@ Provide Ayurvedic guidance for common illnesses with simple, safe home remedies.
 
 ### 3. Personalized Ayurvedic Remedies  
 - Suggest simple, step-by-step remedies using common kitchen ingredients.  
-- Tailor recommendations based on the person’s *Dosha* and health history from `{context}`.  
+- Tailor recommendations based on the person's *Dosha* and health history from `{context}`.  
 - Keep responses clear, short, and practical.  
 
 ### 4. Precautions and Lifestyle Tips  
-- Highlight important do’s and don’ts.  
+- Highlight important do's and don'ts.  
 - Recommend basic dietary and lifestyle changes for better recovery.  
 
 ### 5. When to Seek Medical Help  

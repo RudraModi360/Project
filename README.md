@@ -41,7 +41,10 @@ LANGCHAIN_ENDPOINT=https://api.smith.langchain.com
 LANGCHAIN_API_KEY=your_langchain_api_key
 LANGCHAIN_PROJECT=Streamlit-Ayu
 GROQ_API_KEY=your_groq_api_key
+COHERE_API_KEY=your_cohere_api_key  # Required if Ollama is not installed
 ```
+
+**Note:** The COHERE_API_KEY is required only if Ollama is not installed locally. The system will automatically fall back to using Cohere embeddings in such cases.
 
 ## Usage
 
