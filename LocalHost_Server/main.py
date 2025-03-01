@@ -166,5 +166,5 @@ async def get_session_history(session_id: str):
 
 if __name__ == "__main__":
     import uvicorn
-
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    port = int(os.getenv("PORT", 8000))  # Render sets the port via the PORT env variable
+    uvicorn.run(app, host="0.0.0.0", port=port)
