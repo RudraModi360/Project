@@ -62,9 +62,9 @@ streamlit run Streamlit_page.py
 ### API Endpoints
 The backend supports the following endpoints:
 
-/chat: Handles user queries and returns Ayurvedic responses.
-/new_session: Initiates a new chat session, resetting the current context.
-/get_session_history: Retrieves the history of a specific chat session.
+chat: Handles user queries and returns Ayurvedic responses.
+new_session: Initiates a new chat session, resetting the current context.
+get_session_history: Retrieves the history of a specific chat session.
 
 ### Chat Interface
 - **Ask Questions:** Use the input box to ask about health concerns.
