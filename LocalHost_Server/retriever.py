@@ -8,16 +8,30 @@ from LocalHost_Server.models import get_llm
 import os
 
 try:
-    vector_db = get_vector_db()
-    if not vector_db:
-        raise ValueError("Failed to initialize vector database")
+    # Initialize vector database with better error handling
+    try:
+        vector_db = get_vector_db()
+        if not vector_db:
+            raise ValueError("Vector database initialization returned None")
+    except Exception as db_error:
+        raise RuntimeError(f"Vector database initialization failed: {str(db_error)}")
     
+    # Initialize LLM with proper API key validation
     groq_api_key = os.getenv("GROQ_API_KEY")
     if not groq_api_key:
         raise ValueError("GROQ_API_KEY must be provided in environment variables")
     
-    llm = get_llm("llama-3.3-70b-specdec", groq_api_key)
-    retriever = vector_db.as_retriever()
+    try:
+        llm = get_llm("llama-3.3-70b-specdec", groq_api_key)
+    except Exception as llm_error:
+        raise RuntimeError(f"LLM initialization failed: {str(llm_error)}")
+    
+    # Initialize retriever
+    try:
+        retriever = vector_db.as_retriever()
+    except Exception as retriever_error:
+        raise RuntimeError(f"Retriever initialization failed: {str(retriever_error)}")
+        
 except Exception as e:
     raise RuntimeError(f"Failed to initialize RAG components: {str(e)}")
 
@@ -88,11 +102,22 @@ context_prompt = ChatPromptTemplate.from_messages(
 
 def get_rag_chain():
     try:
+        print("Initializing history-aware retriever...")
         history_aware_retriever = create_history_aware_retriever(
             llm, retriever, context_prompt
         )
+        print("History-aware retriever initialized:", history_aware_retriever)
+
+        print("Creating document chain...")
         history_chain = create_stuff_documents_chain(llm, with_memory_prompt)
+        print("Document chain initialized:", history_chain)
+
+        print("Combining retriever and document chain into RAG chain...")
         rag_chain = create_retrieval_chain(history_aware_retriever, history_chain)
+        print("RAG chain successfully created:", rag_chain)
+
         return rag_chain
+
     except Exception as e:
+        print("Error during RAG chain creation:", str(e))
         raise RuntimeError(f"Failed to create RAG chain: {str(e)}")

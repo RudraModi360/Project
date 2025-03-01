@@ -47,7 +47,6 @@ class ChatRequest(BaseModel):
     message: str
     session_id: Optional[str] = None
 
-
 def get_google_queries(response: str, llm) -> str:
     prompt = f"""
     Analyze the given response: {response}.
@@ -99,15 +98,14 @@ async def root():
     return {"message": "Welcome to AyuHelper API"}
 
 
+import traceback
+
 @app.post("/chat")
 async def chat(request: ChatRequest):
     try:
-        # Get or create session ID
         session_id = request.session_id or str(uuid.uuid4())
-        # Get chat history for this session
         chat_history = get_chat_session_history(session_id)
 
-        # Convert chat history to the format expected by the RAG chain
         formatted_history = []
         for message in chat_history.messages:
             if isinstance(message, HumanMessage):
@@ -115,69 +113,68 @@ async def chat(request: ChatRequest):
             elif isinstance(message, AIMessage):
                 formatted_history.append({"type": "ai", "content": message.content})
 
-        # Generate response using the RAG chain
-        try:
-            response = rag_chain.invoke(
-                {"input": request.message, "chat_history": formatted_history},
-                config={"configurable": {"session_id": session_id}},
-            )
-            
-            # Check response structure
-            if not isinstance(response, dict):
-                raise ValueError(f"Unexpected response type: {type(response)}")
-            
-            if "answer" not in response:
-                # Try to extract answer from different response formats
-                if isinstance(response.get("output"), str):
-                    response["answer"] = response["output"]
-                elif isinstance(response.get("response"), str):
-                    response["answer"] = response["response"]
-                else:
-                    raise ValueError(f"Cannot find answer in response: {response}")
-                    
-        except Exception as chain_error:
-            raise HTTPException(
-                status_code=500,
-                detail=f"Failed to generate response: {str(chain_error)}"
-            )
+        print(f"Received message: {request.message}")
+        print(f"Formatted history: {formatted_history}")
+        print(f"Session ID: {session_id}")
 
-        top_links = []
-        youtube_videos = []
-        # Only fetch external links if a recipe is present
-        if has_recipe(response["answer"], llm):
-            # Get Google search results
-            query = get_google_queries(response["answer"], llm)
-            params = {
-                "key": GOOGLE_API_KEY,
-                "cx": GOOGLE_SEARCH_ENGINE_ID,
-                "q": query,
-            }
-            res = requests.get(GOOGLE_SEARCH_URL, params=params)
-            results = res.json()
-            top_links = [item["link"] for item in results.get("items", [])[:2]]
-            
-            # Get YouTube video suggestions
-            youtube_url = get_youtube_videos(response["answer"], llm)
-            youtube_videos = [{
-                "title": "YouTube Search Results",
-                "url": youtube_url
-            }]
+        if not rag_chain:
+            raise ValueError("RAG chain is not initialized")
+
+        print("Sending to RAG chain:", {"input": request.message, "chat_history": formatted_history})
+
+        # Call the RAG chain
+        response = rag_chain.invoke(
+            {"input": request.message, "chat_history": formatted_history},
+            config={"configurable": {"session_id": session_id}},
+        )
+
+        print("Raw RAG chain response:", response)
+
+        if not isinstance(response, dict):
+            raise ValueError(f"Unexpected response type: {type(response)}, content: {response}")
+
+        answer = response.get("answer") or response.get("output") or response.get("response")
+
+        if not answer:
+            raise ValueError(f"No valid answer found in response structure: {response}")
+
+        chat_history.add_user_message(request.message)
+        chat_history.add_ai_message(answer)
+
+        return ChatResponse(
+            answer=answer,
+            session_id=session_id,
+            google_links=[],
+            youtube_videos=[]
+        )
+
+    except Exception as chain_error:
+        print("RAG Chain Error:", str(chain_error))
+        traceback.print_exc()  # <-- Add this to see full error details
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to generate response: {str(chain_error)}"
+        )
+
+
 
         # Add the new messages to the chat history
         chat_history.add_user_message(request.message)
-        chat_history.add_ai_message(response["answer"])
+        chat_history.add_ai_message(answer)
 
         # Return the response with Google links and YouTube videos
         return ChatResponse(
-            answer=response["answer"], 
-            session_id=session_id, 
-            google_links=top_links,
-            youtube_videos=youtube_videos
+            answer=answer,
+            session_id=session_id,
+            google_links=[],  # Will be populated if recipe is found
+            youtube_videos=[]  # Will be populated if recipe is found
         )
         
     except HTTPException as http_error:
         raise http_error
     except Exception as e:
+        # Log unexpected errors
+        print(f"Unexpected error in chat endpoint: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Unexpected error: {str(e)}")
 
 

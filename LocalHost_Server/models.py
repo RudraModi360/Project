@@ -4,14 +4,18 @@ from langchain_cohere import CohereEmbeddings
 from langchain_ollama import OllamaEmbeddings
 
 def get_embedding_model():
-    # try:
-    #     cohere_api_key = os.getenv("COHERE_API_KEY")
-    #     if not cohere_api_key:
-    #         raise ValueError("COHERE_API_KEY must be provided in environment variables")
-    #     return CohereEmbeddings(cohere_api_key=cohere_api_key, model="embed-english-v3.0")
+    cohere_api_key = os.getenv("COHERE_API_KEY")
+    embeddings = CohereEmbeddings(cohere_api_key=cohere_api_key, model="embed-multilingual-v2.0")
+    #         # Test the embeddings with a simple query
+    #         embeddings.embed_query("test")
+    return embeddings
+    #     except Exception as cohere_error:
+    #         print(f"Warning: Cohere embeddings failed: {str(cohere_error)}")
+    #         return OllamaEmbeddings(model="nomic-embed-text:latest")
+            
     # except Exception as e:
-    #     print(f"Warning: Cohere embeddings failed, falling back to Ollama: {str(e)}")
-        return OllamaEmbeddings(model="nomic-embed-text:latest")
+    #     print(f"Critical error in embedding initialization: {str(e)}")
+    #     raise RuntimeError(f"Failed to initialize any embedding model: {str(e)}")
 
 def get_llm(model_name=None, groq_api_key=None):
     # Use environment variables as fallback

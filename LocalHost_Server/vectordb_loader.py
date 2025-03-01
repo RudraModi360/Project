@@ -14,4 +14,3 @@ def get_vector_db():
         embeddings=get_embedding_model(),
         allow_dangerous_deserialization=True,
     )
-
