@@ -10,15 +10,13 @@ from LocalHost_Server.models import get_llm
 from LocalHost_Server.retriever import get_rag_chain
 from LocalHost_Server.chat_history import get_chat_session_history
 from langchain_core.messages import HumanMessage, AIMessage
+from googlesearch import search
+from LocalHost_Server.fetch import *
 
 # Load environment variables
 load_dotenv()
 
-llm=get_llm()
-# Google Search API configuration
-GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY", "AIzaSyB7sfStkrXLwzxEBfFtGxcmCnfxra0OEmQ")
-GOOGLE_SEARCH_ENGINE_ID = os.getenv("GOOGLE_SEARCH_ENGINE_ID", "d3c4eae8e0bc44663")
-GOOGLE_SEARCH_URL = "https://www.googleapis.com/customsearch/v1"
+llm = get_llm()
 
 # Initialize FastAPI app
 app = FastAPI(
@@ -47,45 +45,12 @@ class ChatRequest(BaseModel):
     message: str
     session_id: Optional[str] = None
 
-def get_google_queries(response: str, llm) -> str:
-    prompt = f"""
-    Analyze the given response: {response}.
-    Generate a concise, one-line Ayurvedic remedy for a common cough (max 50 words).
-    Then, based on this remedy, provide a focused Google search query to find the most relevant Ayurvedic solutions.
-    Only return the search query without extra explanations.
-    """
-    return llm.invoke(prompt).content
-
-def has_recipe(response: str, llm) -> bool:
-    prompt = f"""
-    Analyze this response and determine if it contains any Ayurvedic recipe or remedy instructions:
-    {response}
-    Return only 'true' if it contains a recipe/remedy, or 'false' if it doesn't.
-    """
-    result = llm.invoke(prompt).content.lower().strip()
-    return result == 'true'
-
-# YouTube Data API endpoint and configuration
-YOUTUBE_API_KEY = os.getenv("YOUTUBE_API_KEY", "AIzaSyB7sfStkrXLwzxEBfFtGxcmCnfxra0OEmQ")
-YOUTUBE_URL = "https://www.googleapis.com/youtube/v3/search"
-
-def get_youtube_videos(response: str, llm) -> str:
-    prompt = f"""
-    Analyze the given response: {response}.
-    If there are any Ayurvedic remedies or treatments mentioned, create a focused YouTube search query to find relevant tutorial videos.
-    Only return the search query without extra explanations.
-    """
-    query = llm.invoke(prompt).content
-    # Format the query for URL
-    formatted_query = query.strip().replace(' ', '+')
-    return f"https://www.youtube.com/results?search_query={formatted_query}"
-
 # Update ChatResponse model
 class ChatResponse(BaseModel):
     answer: str
     session_id: str
     google_links: List[str] = []
-    youtube_videos: List[Dict[str, str]] = []
+    youtube_videos: List[str] = []
 
 
 class SessionResponse(BaseModel):
@@ -98,14 +63,15 @@ async def root():
     return {"message": "Welcome to AyuHelper API"}
 
 
-import traceback
-
 @app.post("/chat")
 async def chat(request: ChatRequest):
     try:
+        # Get or create session ID
         session_id = request.session_id or str(uuid.uuid4())
+        # Get chat history for this session
         chat_history = get_chat_session_history(session_id)
 
+        # Convert chat history to the format expected by the RAG chain
         formatted_history = []
         for message in chat_history.messages:
             if isinstance(message, HumanMessage):
@@ -113,63 +79,56 @@ async def chat(request: ChatRequest):
             elif isinstance(message, AIMessage):
                 formatted_history.append({"type": "ai", "content": message.content})
 
-        print(f"Received message: {request.message}")
-        print(f"Formatted history: {formatted_history}")
-        print(f"Session ID: {session_id}")
+        # Generate response using the RAG chain
+        try:
+            response = rag_chain.invoke(
+                {"input": request.message, "chat_history": formatted_history},
+                config={"configurable": {"session_id": session_id}},
+            )
+            # Check response structure
+            if not isinstance(response, dict):
+                raise ValueError(f"Unexpected response type: {type(response)}")
 
-        if not rag_chain:
-            raise ValueError("RAG chain is not initialized")
+            # Extract answer from response with better error handling
+            answer = None
+            if "answer" in response:
+                answer = response["answer"]
+            elif isinstance(response.get("output"), str):
+                answer = response["output"]
+            elif isinstance(response.get("response"), str):
+                answer = response["response"]
 
-        print("Sending to RAG chain:", {"input": request.message, "chat_history": formatted_history})
+            if not answer:
+                raise ValueError(
+                    f"No valid answer found in response structure: {response}"
+                )
 
-        # Call the RAG chain
-        response = rag_chain.invoke(
-            {"input": request.message, "chat_history": formatted_history},
-            config={"configurable": {"session_id": session_id}},
-        )
-
-        print("Raw RAG chain response:", response)
-
-        if not isinstance(response, dict):
-            raise ValueError(f"Unexpected response type: {type(response)}, content: {response}")
-
-        answer = response.get("answer") or response.get("output") or response.get("response")
-
-        if not answer:
-            raise ValueError(f"No valid answer found in response structure: {response}")
-
-        chat_history.add_user_message(request.message)
-        chat_history.add_ai_message(answer)
-
-        return ChatResponse(
-            answer=answer,
-            session_id=session_id,
-            google_links=[],
-            youtube_videos=[]
-        )
-
-    except Exception as chain_error:
-        print("RAG Chain Error:", str(chain_error))
-        traceback.print_exc()  # <-- Add this to see full error details
-        raise HTTPException(
-            status_code=500,
-            detail=f"Failed to generate response: {str(chain_error)}"
-        )
-
-
+        except Exception as chain_error:
+            # Log the error for debugging
+            print(f"RAG Chain Error: {str(chain_error)}")
+            print(
+                f"Response structure: {response if 'response' in locals() else 'No response generated'}"
+            )
+            raise HTTPException(
+                status_code=500,
+                detail=f"Failed to generate response: {str(chain_error)}",
+            )
 
         # Add the new messages to the chat history
         chat_history.add_user_message(request.message)
         chat_history.add_ai_message(answer)
-
-        # Return the response with Google links and YouTube videos
+        # Check if response contains a recipe and fetch external links
+        youtube_videos = []
+        article_links = []
+        article_links = fetch_article_links(answer, llm)
+        youtube_videos = fetch_youtube_links(answer, llm)
         return ChatResponse(
             answer=answer,
             session_id=session_id,
-            google_links=[],  # Will be populated if recipe is found
-            youtube_videos=[]  # Will be populated if recipe is found
+            google_links=article_links,
+            youtube_videos=youtube_videos,
         )
-        
+
     except HTTPException as http_error:
         raise http_error
     except Exception as e:

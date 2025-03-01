@@ -23,7 +23,7 @@ def get_llm(model_name=None, groq_api_key=None):
     if not api_key:
         raise ValueError("GROQ_API_KEY must be provided either as an argument or in environment variables")
     
-    model = model_name or os.getenv("GROQ_MODEL", "llama-3.3-70b-specdec")
+    model = model_name or os.getenv("GROQ_MODEL", "llama-3.1-8b-instant")
     temperature = float(os.getenv("GROQ_TEMPERATURE", "0.7"))
     
     return ChatGroq(

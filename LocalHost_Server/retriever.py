@@ -102,20 +102,11 @@ context_prompt = ChatPromptTemplate.from_messages(
 
 def get_rag_chain():
     try:
-        print("Initializing history-aware retriever...")
         history_aware_retriever = create_history_aware_retriever(
             llm, retriever, context_prompt
         )
-        print("History-aware retriever initialized:", history_aware_retriever)
-
-        print("Creating document chain...")
         history_chain = create_stuff_documents_chain(llm, with_memory_prompt)
-        print("Document chain initialized:", history_chain)
-
-        print("Combining retriever and document chain into RAG chain...")
         rag_chain = create_retrieval_chain(history_aware_retriever, history_chain)
-        print("RAG chain successfully created:", rag_chain)
-
         return rag_chain
 
     except Exception as e:
