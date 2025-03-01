@@ -7,9 +7,19 @@ from langchain.chains import create_history_aware_retriever
 from LocalHost_Server.models import get_llm
 import os
 
-vector_db = get_vector_db()
-llm = get_llm("llama-3.3-70b-specdec", os.getenv("GROQ_API_KEY"))
-retriever = vector_db.as_retriever()
+try:
+    vector_db = get_vector_db()
+    if not vector_db:
+        raise ValueError("Failed to initialize vector database")
+    
+    groq_api_key = os.getenv("GROQ_API_KEY")
+    if not groq_api_key:
+        raise ValueError("GROQ_API_KEY must be provided in environment variables")
+    
+    llm = get_llm("llama-3.3-70b-specdec", groq_api_key)
+    retriever = vector_db.as_retriever()
+except Exception as e:
+    raise RuntimeError(f"Failed to initialize RAG components: {str(e)}")
 
 retriever_prompt = "Based on the provided chat history and the user's latest question — which may reference prior context — rephrase the question into a self-contained query that is clear without relying on the chat history. Do not answer the question; simply reformulate it if necessary, or return it unchanged."
 
@@ -62,7 +72,7 @@ I am AyuHelper, created by Team Ayurnetra today. I offer Ayurvedic advice like a
 
 """,
         ),
-        MessagesPlaceholder("chat_history"),
+        MessagesPlaceholder(variable_name="chat_history"),
         ("human", "{input}"),
     ]
 )
@@ -77,9 +87,12 @@ context_prompt = ChatPromptTemplate.from_messages(
 
 
 def get_rag_chain():
-    history_aware_retriever = create_history_aware_retriever(
-        llm, retriever, context_prompt
-    )
-    history_chain = create_stuff_documents_chain(llm, with_memory_prompt)
-    rag_chain = create_retrieval_chain(history_aware_retriever, history_chain)
-    return rag_chain
+    try:
+        history_aware_retriever = create_history_aware_retriever(
+            llm, retriever, context_prompt
+        )
+        history_chain = create_stuff_documents_chain(llm, with_memory_prompt)
+        rag_chain = create_retrieval_chain(history_aware_retriever, history_chain)
+        return rag_chain
+    except Exception as e:
+        raise RuntimeError(f"Failed to create RAG chain: {str(e)}")

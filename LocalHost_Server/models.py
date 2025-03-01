@@ -1,13 +1,17 @@
 from langchain_groq import ChatGroq
 import os
 from langchain_cohere import CohereEmbeddings
+from langchain_ollama import OllamaEmbeddings
 
 def get_embedding_model():
-    cohere_api_key = os.getenv("COHERE_API_KEY")
-    print(cohere_api_key)
-    if not cohere_api_key:
-        raise ValueError("COHERE_API_KEY must be provided in environment variables")
-    return CohereEmbeddings(cohere_api_key=cohere_api_key, model="embed-english-v3.0")
+    # try:
+    #     cohere_api_key = os.getenv("COHERE_API_KEY")
+    #     if not cohere_api_key:
+    #         raise ValueError("COHERE_API_KEY must be provided in environment variables")
+    #     return CohereEmbeddings(cohere_api_key=cohere_api_key, model="embed-english-v3.0")
+    # except Exception as e:
+    #     print(f"Warning: Cohere embeddings failed, falling back to Ollama: {str(e)}")
+        return OllamaEmbeddings(model="nomic-embed-text:latest")
 
 def get_llm(model_name=None, groq_api_key=None):
     # Use environment variables as fallback
