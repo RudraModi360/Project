@@ -48,22 +48,87 @@ COHERE_API_KEY=your_cohere_api_key  # Required if Ollama is not installed
 
 ## Usage
 
-### Running the Backend Server
+### Deployed API
+The API is deployed and accessible at:
+```
+https://projectuvicorn-localhost-server-main-app.onrender.com
+```
+
+### API Endpoints
+
+#### 1. Root Endpoint
+- **URL:** `/`
+- **Method:** `GET`
+- **Description:** Welcome message endpoint
+- **Response:** `{"message": "Welcome to AyuHelper API"}`
+
+#### 2. Chat Endpoint
+- **URL:** `/chat`
+- **Method:** `POST`
+- **Description:** Process user queries and return Ayurvedic responses
+- **Request Body:**
+  ```json
+  {
+    "message": "string",
+    "user_id": "string" (optional)
+  }
+  ```
+- **Response:**
+  ```json
+  {
+    "answer": "string",
+    "user_id": "string",
+    "google_links": ["string"],
+    "youtube_videos": ["string"]
+  }
+  ```
+
+#### 3. New User Endpoint
+- **URL:** `/new_user`
+- **Method:** `POST`
+- **Description:** Create a new user session
+- **Response:**
+  ```json
+  {
+    "user_id": "string",
+    "message": "string"
+  }
+  ```
+
+#### 4. User History Endpoint
+- **URL:** `/users/{user_id}/history`
+- **Method:** `GET`
+- **Description:** Retrieve chat history for a specific user
+- **Response:**
+  ```json
+  {
+    "history": [
+      {
+        "role": "user|assistant",
+        "content": "string"
+      }
+    ]
+  }
+  ```
+
+### Running Locally
+
+#### Backend Server
 Start the FastAPI backend server:
 ```bash
 uvicorn LocalHost_Server.main:app --reload
 ```
 
-### Running the Frontend
+#### Frontend
 Start the Streamlit app by running:
 ```bash
 streamlit run Streamlit_page.py
 ```
-### API Endpoints
-The backend supports the following endpoints:
-- **`/chat`**: Handles user queries and returns Ayurvedic responses.
-- **`/new_session`**: Initiates a new chat session, resetting the current context.
-- **`/get_session_history`**: Retrieves the history of a specific chat session.
+
+### Chat Interface
+- **Ask Questions:** Use the input box to ask about health concerns.
+- **Session History:** View past conversations in the sidebar.
+- **Start New Session:** Use the sidebar button to reset chat history and start a new session.
   
 ### Chat Interface
 - **Ask Questions:** Use the input box to ask about health concerns.
