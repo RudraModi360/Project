@@ -1,6 +1,7 @@
 import streamlit as st
 import uuid
 import os
+import requests
 from langchain_groq import ChatGroq
 from langchain_core.messages import HumanMessage, AIMessage
 from langchain_core.chat_history import InMemoryChatMessageHistory
@@ -118,6 +119,36 @@ def get_chat_session_history(session_id: str) -> BaseChatMessageHistory:
     return st.session_state.store[session_id]
 
 
+def get_google_queries(response):
+    prompt = f"""
+    Analyze the given response: {response}.
+    Generate a concise, one-line Ayurvedic remedy for a common cough (max 50 words).
+    Then, based on this remedy, provide a focused Google search query to find the most relevant Ayurvedic solutions.
+    Only return the search query without extra explanations.
+    """
+    return llm.invoke(prompt).content
+
+
+def get_youtube_videos(response):
+    prompt = f"""
+    Analyze the given response: {response}.
+    If there are any Ayurvedic remedies or treatments mentioned, create a focused YouTube search query to find relevant tutorial videos.
+    Only return the search query without extra explanations.
+    """
+    query = llm.invoke(prompt).content
+    # Format the query for URL
+    formatted_query = query.strip().replace(' ', '+')
+    return f"https://www.youtube.com/results?search_query={formatted_query}"
+
+# YouTube Data API endpoint and configuration
+youtube_api_key = "AIzaSyB7sfStkrXLwzxEBfFtGxcmCnfxra0OEmQ"
+youtube_url = "https://www.googleapis.com/youtube/v3/search"
+
+api_key = "AIzaSyB7sfStkrXLwzxEBfFtGxcmCnfxra0OEmQ"
+search_engine_id = "d3c4eae8e0bc44663"
+
+# Google Custom Search API endpoint
+url = "https://www.googleapis.com/customsearch/v1"
 
 conversational_rag_chain = RunnableWithMessageHistory(
     rag_chain,
@@ -170,6 +201,15 @@ st.title("AyuHelper")
 
 user_input = st.chat_input("Ask AyuHelper about your health...")
 
+def has_recipe(response):
+    prompt = f"""
+    Analyze this response and determine if it contains any Ayurvedic recipe or remedy instructions:
+    {response}
+    Return only 'true' if it contains a recipe/remedy, or 'false' if it doesn't.
+    """
+    result = llm.invoke(prompt).content.lower().strip()
+    return result == 'true'
+
 if user_input:
     with st.spinner("Processing your request..."):
         session_id = st.session_state.session_id
@@ -177,6 +217,46 @@ if user_input:
             {"input": user_input},
             config={"configurable": {"session_id": session_id}},
         )
+        print(response["answer"])
+        
+        # Only fetch external links if a recipe is present
+        if has_recipe(response["answer"]):
+            # Get Google search results
+            query = get_google_queries(response["answer"])
+            params = {
+                "key": api_key,
+                "cx": search_engine_id,
+                "q": query,
+            }
+            res = requests.get(url, params=params)
+            results = res.json()
+            top_links = [item["link"] for item in results.get("items", [])[:2]]
+            print(top_links)
+            
+            # Get YouTube video suggestions
+            youtube_query = get_youtube_videos(response["answer"])
+            youtube_params = {
+                "key": youtube_api_key,
+                "part": "snippet",
+                "q": youtube_query,
+                "type": "video",
+                "maxResults": 2
+            }
+            youtube_res = requests.get(youtube_url, params=youtube_params)
+            youtube_results = youtube_res.json()
+            
+            # Extract video information
+            if "items" in youtube_results:
+                videos = [{
+                    "title": item["snippet"]["title"],
+                    "url": f"https://www.youtube.com/watch?v={item['id']['videoId']}"
+                } for item in youtube_results["items"]]
+                print(videos)
+                # Display video suggestions in the sidebar
+                with st.sidebar.expander("📺 Related Videos", expanded=True):
+                    for video in videos:
+                        st.markdown(f"[{video['title']}]({video['url']})")
+
         st.session_state.chat_history.add_message(HumanMessage(content=user_input))
         st.session_state.chat_history.add_message(AIMessage(content=response["answer"]))
 
