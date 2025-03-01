@@ -8,10 +8,11 @@ import requests
 from dotenv import load_dotenv
 from LocalHost_Server.models import get_llm
 from LocalHost_Server.retriever import get_rag_chain
-from LocalHost_Server.chat_history import get_chat_session_history
+from LocalHost_Server.chat_history import get_user_history
 from langchain_core.messages import HumanMessage, AIMessage
 from googlesearch import search
 from LocalHost_Server.fetch import *
+from LocalHost_Server.supabase_client import *
 
 # Load environment variables
 load_dotenv()
@@ -36,25 +37,26 @@ app.add_middleware(
 
 # Initialize the RAG chain
 rag_chain = get_rag_chain()
-# Store active sessions
-sessions = {}
+# Store active users
+users = {}
 
 
 # Pydantic models for request and response
 class ChatRequest(BaseModel):
     message: str
-    session_id: Optional[str] = None
+    user_id: Optional[str] = None
+
 
 # Update ChatResponse model
 class ChatResponse(BaseModel):
     answer: str
-    session_id: str
+    user_id: str
     google_links: List[str] = []
     youtube_videos: List[str] = []
 
 
-class SessionResponse(BaseModel):
-    session_id: str
+class UserResponse(BaseModel):
+    user_id: str
     message: str
 
 
@@ -66,10 +68,10 @@ async def root():
 @app.post("/chat")
 async def chat(request: ChatRequest):
     try:
-        # Get or create session ID
-        session_id = request.session_id or str(uuid.uuid4())
-        # Get chat history for this session
-        chat_history = get_chat_session_history(session_id)
+        # Get or create user ID
+        user_id = request.user_id or str(uuid.uuid4())
+        # Get chat history for this user
+        chat_history = get_user_history(user_id)
 
         # Convert chat history to the format expected by the RAG chain
         formatted_history = []
@@ -83,7 +85,7 @@ async def chat(request: ChatRequest):
         try:
             response = rag_chain.invoke(
                 {"input": request.message, "chat_history": formatted_history},
-                config={"configurable": {"session_id": session_id}},
+                config={"configurable": {"user_id": user_id}},
             )
             # Check response structure
             if not isinstance(response, dict):
@@ -114,9 +116,10 @@ async def chat(request: ChatRequest):
                 detail=f"Failed to generate response: {str(chain_error)}",
             )
 
-        # Add the new messages to the chat history
+        # Add the new messages to the chat history and Supabase
         chat_history.add_user_message(request.message)
         chat_history.add_ai_message(answer)
+        insert_into_table(user_id, request.message, answer)
         # Check if response contains a recipe and fetch external links
         youtube_videos = []
         article_links = []
@@ -124,7 +127,7 @@ async def chat(request: ChatRequest):
         youtube_videos = fetch_youtube_links(answer, llm)
         return ChatResponse(
             answer=answer,
-            session_id=session_id,
+            user_id=user_id,
             google_links=article_links,
             youtube_videos=youtube_videos,
         )
@@ -137,21 +140,21 @@ async def chat(request: ChatRequest):
         raise HTTPException(status_code=500, detail=f"Unexpected error: {str(e)}")
 
 
-@app.post("/new_session", response_model=SessionResponse)
-async def new_session():
-    # Generate a new session ID
-    session_id = str(uuid.uuid4())
+@app.post("/new_user", response_model=UserResponse)
+async def new_user():
+    # Generate a new user ID
+    user_id = str(uuid.uuid4())
 
-    # Initialize an empty chat history for this session
-    get_chat_session_history(session_id)
+    # Initialize an empty chat history for this user
+    get_user_history(user_id)
 
-    return SessionResponse(session_id=session_id, message="New session created")
+    return UserResponse(user_id=user_id, message="New user created")
 
 
-@app.get("/sessions/{session_id}/history")
-async def get_session_history(session_id: str):
-    # Get chat history for this session
-    chat_history = get_chat_session_history(session_id)
+@app.get("/users/{user_id}/history")
+async def get_user_history_endpoint(user_id: str):
+    # Get chat history for this user
+    chat_history = get_user_history(user_id)
 
     # Format the history for response
     formatted_history = []
@@ -166,5 +169,8 @@ async def get_session_history(session_id: str):
 
 if __name__ == "__main__":
     import uvicorn
-    port = int(os.getenv("PORT", 8000))  # Render sets the port via the PORT env variable
+
+    port = int(
+        os.getenv("PORT", 8000)
+    )  # Render sets the port via the PORT env variable
     uvicorn.run(app, host="0.0.0.0", port=port)
