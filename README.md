@@ -129,11 +129,6 @@ streamlit run Streamlit_page.py
 - **Ask Questions:** Use the input box to ask about health concerns.
 - **Session History:** View past conversations in the sidebar.
 - **Start New Session:** Use the sidebar button to reset chat history and start a new session.
-  
-### Chat Interface
-- **Ask Questions:** Use the input box to ask about health concerns.
-- **Session History:** View past conversations in the sidebar.
-- **Start New Session:** Use the sidebar button to reset chat history and start a new session.
 
 ## Structure
 - `llm`: Configures the Groq model (Llama 3.2 90B vision preview).
