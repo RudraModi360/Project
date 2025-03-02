@@ -2,6 +2,10 @@
 
 ## Team 17
 
+## Demo 🎥
+
+Watch the Ayunetra demo video here: [Ayunetra Demo](https://drive.google.com/file/d/1JznCaZ9QyGoUaSyyM-2mQyh1dUer2o4_/view?usp=drive_link)
+
 ## Overview
 
 Ayunetra is an AI-driven health assistant that combines Ayurvedic wisdom with modern AI technology to provide personalized recommendations for common day-to-day health concerns. It helps users manage and find relief from various ailments such as cough, fever, sneezing, acidity, and more, all while maintaining a conversational, empathetic tone.
@@ -147,9 +151,6 @@ uvicorn LocalHost_Server.main:app --reload
   }
   ```
 
-## Demo 🎥
-
-Watch the Ayunetra demo video here: [Ayunetra Demo](https://drive.google.com/file/d/1JznCaZ9QyGoUaSyyM-2mQyh1dUer2o4_/view?usp=drive_link)
 
 ## Contributing 🤝
 
