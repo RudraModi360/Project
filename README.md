@@ -1,5 +1,7 @@
 # Ayunetra - Your AI-Powered Ayurvedic Health Assistant 🌿
 
+## Team 17
+
 ## Overview
 
 Ayunetra is an AI-driven health assistant that combines Ayurvedic wisdom with modern AI technology to provide personalized recommendations for common day-to-day health concerns. It helps users manage and find relief from various ailments such as cough, fever, sneezing, acidity, and more, all while maintaining a conversational, empathetic tone.
