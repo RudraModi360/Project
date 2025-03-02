@@ -1,25 +1,48 @@
-# AyuHelper - An Ayurvedic Chatbot
+# Ayunetra - Your AI-Powered Ayurvedic Health Assistant 🌿
 
 ## Overview
-AyuHelper is an AI-powered chatbot designed to provide Ayurvedic guidance for common health issues. It offers personalized home remedies based on Ayurvedic principles while maintaining a caring, humble, and conversational tone. The chatbot adapts its responses using a RAG (Retrieval-Augmented Generation) system and tracks user interactions for context-aware conversations.
 
-## Features
-- **Conversational Flow:** The chatbot follows a structured interaction, starting with understanding the user's body type (Dosha) and medical history.
-- **Retrieval-Augmented Generation (RAG):** Combines document retrieval with real-time AI responses.
-- **Session Management:** Supports multiple chat sessions with history tracking and session resets.
-- **Contextual Memory:** Retains user data like Dosha type and health issues to personalize responses.
-- **Streamlit Integration:** Clean and user-friendly chat interface powered by Streamlit.
+Ayunetra is an AI-driven health assistant that combines Ayurvedic wisdom with modern AI technology to provide personalized recommendations for common day-to-day health concerns. It helps users manage and find relief from various ailments such as cough, fever, sneezing, acidity, and more, all while maintaining a conversational, empathetic tone.
 
-## Setup
+## Features 🌟
+
+- **Personalized Ayurvedic Recommendations:** Tailored advice based on your specific symptoms and body type (Dosha).
+- **Common Ailment Support:** Guidance for daily health issues including:
+  - Fever
+  - Cough
+  - Sneezing
+  - Acidity
+  - And many more
+- **Conversational Flow:** Follows a doctor-patient style interaction, starting by understanding your body nature and health history.
+- **RAG-based AI:** Combines document retrieval with real-time AI responses to give accurate and personalized suggestions.
+- **Contextual Memory:** Remembers user inputs like Dosha type and symptoms for better follow-up advice.
+- **User-Friendly Interface:** Clean and intuitive chat interface powered by Streamlit.
+- **24/7 Availability:** Access Ayurvedic health recommendations anytime, anywhere.
+
+## Important Note ⚠️
+
+Ayunetra is designed to provide general guidance for non-severe health conditions. It is not a substitute for professional medical advice. Always consult a healthcare provider for serious medical conditions.
+
+## Technology Stack 💻
+
+- **FastAPI:** Backend framework for AI-powered responses.
+- **Streamlit:** Frontend for chat interface.
+- **LangChain:** Used for RAG-based retrieval and AI interaction.
+- **FAISS:** Vector database for efficient document similarity search.
+- **Python 3.8+**
+
+## Setup 🚀
 
 ### Prerequisites
+
 Ensure you have the following installed:
 - Python 3.8 or higher
 - Streamlit
 - LangChain
-- LangChain Community Libraries (Groq, Ollama, FAISS)
+- FAISS
 
 ### Installation
+
 1. Clone the repository:
    ```bash
    git clone https://github.com/RudraModi360/Project.git
@@ -31,36 +54,47 @@ Ensure you have the following installed:
    pip install -e .
    ```
 
-   This will install all required dependencies and the local package in development mode.
-
 ### Environment Variables
-Configure the following environment variables in a `.env` file or your local environment:
+
+Create a `.env` file and configure the following environment variables:
 ```
 LANGCHAIN_TRACING=true
-LANGCHAIN_ENDPOINT=https://api.smith.langchain.com
-LANGCHAIN_API_KEY=your_langchain_api_key
 LANGCHAIN_PROJECT=Streamlit-Ayu
-GROQ_API_KEY=your_groq_api_key
-COHERE_API_KEY=your_cohere_api_key  # Required if Ollama is not installed
 ```
-
-**Note:** The COHERE_API_KEY is required only if Ollama is not installed locally. The system will automatically fall back to using Cohere embeddings in such cases.
 
 ## Usage
 
-### Deployed API
-The API is deployed and accessible at:
-```
-https://projectuvicorn-localhost-server-main-app.onrender.com
+### Running Locally
+
+#### Backend Server
+Start the FastAPI backend server:
+```bash
+uvicorn LocalHost_Server.main:app --reload
 ```
 
-### API Endpoints
+#### Frontend
+Start the Streamlit app by running:
+```bash
+streamlit run Streamlit_page.py
+```
+
+### Chat Interface
+- **Ask Questions:** Use the input box to ask about health concerns.
+- **Session History:** View past conversations in the sidebar.
+- **Start New Session:** Use the sidebar button to reset chat history and start a new session.
+
+## API Endpoints
 
 #### 1. Root Endpoint
 - **URL:** `/`
 - **Method:** `GET`
 - **Description:** Welcome message endpoint
-- **Response:** `{"message": "Welcome to AyuHelper API"}`
+- **Response:**
+  ```json
+  {
+    "message": "Welcome to AyuHelper API"
+  }
+  ```
 
 #### 2. Chat Endpoint
 - **URL:** `/chat`
@@ -111,32 +145,19 @@ https://projectuvicorn-localhost-server-main-app.onrender.com
   }
   ```
 
-### Running Locally
+## Contributing 🤝
 
-#### Backend Server
-Start the FastAPI backend server:
-```bash
-uvicorn LocalHost_Server.main:app --reload
-```
+We welcome contributions to Ayunetra! Please feel free to submit issues and pull requests.
 
-#### Frontend
-Start the Streamlit app by running:
-```bash
-streamlit run Streamlit_page.py
-```
+## License 📄
 
-### Chat Interface
-- **Ask Questions:** Use the input box to ask about health concerns.
-- **Session History:** View past conversations in the sidebar.
-- **Start New Session:** Use the sidebar button to reset chat history and start a new session.
+This project is licensed under the MIT License - see the LICENSE file for details.
 
-## Structure
-- `llm`: Configures the Groq model (Llama 3.2 90B vision preview).
-- `vector_db`: Uses FAISS for efficient similarity search.
-- `conversational_rag_chain`: Combines retrieval and AI response generation.
-- `get_chat_session_history`: Handles session-specific chat history.
-- `start_new_session`: Resets sessions and stores old ones.
+## Contact 📧
 
-## Customization
-- **Modify prompts:** Adjust the Ayurvedic guidelines and flow in the `with_memory_prompt` and `retriever_prompt` sections.
-- **Fine-tune RAG:** Update the FAISS vector store or use another embedding model.
+For any queries or suggestions, please reach out to us.
+
+---
+
+Built with ❤️ for better health assistance.
+
