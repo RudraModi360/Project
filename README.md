@@ -17,8 +17,8 @@ Ayunetra is an AI-driven health assistant that combines Ayurvedic wisdom with mo
   - And many more
 - **Conversational Flow:** Follows a doctor-patient style interaction, starting by understanding your body nature and health history.
 - **RAG-based AI:** Combines document retrieval with real-time AI responses to give accurate and personalized suggestions.
-- **Contextual Memory:** Remembers user inputs like Dosha type and symptoms for better follow-up advice.
-- **User-Friendly Interface:** Clean and intuitive chat interface powered by Streamlit.
+alsi- **Contextual Memory:** Remembers user inputs like Dosha type and symptoms for better follow-up advice.
+- **RESTful API:** Clean and well-documented API endpoints for easy integration.
 - **24/7 Availability:** Access Ayurvedic health recommendations anytime, anywhere.
 
 ## Important Note ⚠️
@@ -28,7 +28,6 @@ Ayunetra is designed to provide general guidance for non-severe health condition
 ## Technology Stack 💻
 
 - **FastAPI:** Backend framework for AI-powered responses.
-- **Streamlit:** Frontend for chat interface.
 - **LangChain:** Used for RAG-based retrieval and AI interaction.
 - **FAISS:** Vector database for efficient document similarity search.
 - **Python 3.8+**
@@ -39,7 +38,6 @@ Ayunetra is designed to provide general guidance for non-severe health condition
 
 Ensure you have the following installed:
 - Python 3.8 or higher
-- Streamlit
 - LangChain
 - FAISS
 
@@ -64,26 +62,28 @@ LANGCHAIN_TRACING=true
 LANGCHAIN_PROJECT=Streamlit-Ayu
 ```
 
-## Usage
+## API Usage
+
+### Web Application
+
+The fully functional web application is accessible at:
+```
+https://ayu2-dax9.vercel.app/
+```
+
+### API Base URL
+
+The API is deployed and accessible at:
+```
+https://projectuvicorn-localhost-server-main-app.onrender.com
+```
 
 ### Running Locally
 
-#### Backend Server
-Start the FastAPI backend server:
+To run the FastAPI backend server locally:
 ```bash
 uvicorn LocalHost_Server.main:app --reload
 ```
-
-#### Frontend
-Start the Streamlit app by running:
-```bash
-streamlit run Streamlit_page.py
-```
-
-### Chat Interface
-- **Ask Questions:** Use the input box to ask about health concerns.
-- **Session History:** View past conversations in the sidebar.
-- **Start New Session:** Use the sidebar button to reset chat history and start a new session.
 
 ## API Endpoints
 
