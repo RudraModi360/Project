@@ -145,6 +145,10 @@ streamlit run Streamlit_page.py
   }
   ```
 
+## Demo 🎥
+
+Watch the Ayunetra demo video here: [Ayunetra Demo](https://drive.google.com/drive/folders/1CmUzAXVZJQvKz7vcVYPcnO3jnfHYke_j?usp=sharing)
+
 ## Contributing 🤝
 
 We welcome contributions to Ayunetra! Please feel free to submit issues and pull requests.
