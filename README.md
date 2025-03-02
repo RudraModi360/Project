@@ -64,9 +64,9 @@ LANGCHAIN_PROJECT=Streamlit-Ayu
 
 ## API Usage
 
-### Web Application
+### Web Application 🌐
 
-The fully functional web application is accessible at:
+**✨ The fully functional web application is accessible at:**
 ```
 https://ayu2-dax9.vercel.app/
 ```
